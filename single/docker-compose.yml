@@ -1,0 +1,56 @@
+version: '3.8'
+
+networks:
+  broker-network:
+    name: cache-network
+    driver: bridge
+
+services:
+  zookeeper: 
+    image: zookeeper
+    container_name: zookeeper
+    restart: always
+    environment:
+      - ZOO_STANDALONE_ENABLED=true
+      #- ZOO_ADMINSERVER_ENABLED=true
+      - JVMFLAGS=-Xmx128m
+    ports:
+      - 2181:2181
+      #- 8089:8080
+    networks:
+      - broker-network
+    volumes:
+      - zookeeper-data:/data
+          
+  kafka: 
+    image: startupframework/kafka:1.0.2.RELEASE
+    container_name: kafka
+    restart: always  
+    environment:
+      - KAFKA_HEAP_OPTS=-Xmx224m
+    ports:
+      - 9092:9092
+    networks: 
+      - broker-network
+    volumes:
+      - kafka-data:/kafka
+      - ./server.properties:/opt/kafka/config/server.properties
+      
+  kafka_manager:
+    #image: hlebalbau/kafka-manager:stable
+    image: kafkamanager/kafka-manager
+    container_name: kafka_manager
+    restart: always  
+    environment:
+      - ZK_HOSTS=zookeeper:2181
+    ports:
+      - 9000:9000
+    networks: 
+      - broker-network
+        
+volumes:
+  zookeeper-data:
+    driver: local
+  kafka-data:
+      driver: local
+  
